@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"strings"
 )
 
 func main() {
@@ -27,9 +28,28 @@ func main() {
 			log.Fatal(err)
 		}
 
-		fmt.Printf("%v\n", value)
+		if value.typ != "array" {
+			fmt.Println("invalid command, expected array")
+			continue
+		}
+
+		if len(value.array) == 0 {
+			fmt.Println("invalid command, expected non-empty array")
+			continue
+		}
+
+		cmd := strings.ToUpper(value.array[0].bulk)
+		args := value.array[1:]
 
 		writer := NewWriter(conn)
-		writer.Write(Value{typ: "string", str: "OK"})
+
+		handler, ok := Handlers[cmd]
+		if !ok {
+			fmt.Println("unknown command: ", cmd)
+			writer.Write(Value{typ: "string", str: ""})
+			continue
+		}
+		result := handler(args)
+		writer.Write(result)
 	}
 }
