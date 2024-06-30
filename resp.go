@@ -43,7 +43,7 @@ func (r *Resp) readLine() (line []byte, n int, err error) {
 			break
 		}
 	}
-	return line[:2], n, nil
+	return line[:len(line)-2], n, nil
 }
 
 func (r *Resp) readInteger() (x int, n int, err error) {
