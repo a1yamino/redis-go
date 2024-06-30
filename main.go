@@ -30,6 +30,6 @@ func main() {
 		fmt.Printf("%v\n", value)
 
 		writer := NewWriter(conn)
-		writer.Write(Value{typ: "string", bulk: "OK"})
+		writer.Write(Value{typ: "string", str: "OK"})
 	}
 }
