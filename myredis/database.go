@@ -6,6 +6,7 @@ type entry struct {
 	typ entryType
 	// key   string
 	value interface{}
+	sync.RWMutex
 }
 
 type entryType uint8
@@ -20,5 +21,7 @@ const (
 
 var (
 	dbMu sync.RWMutex
-	db   = make(map[string]entry)
+	db   = make(map[string]*entry)
 )
+
+type hash map[string]string

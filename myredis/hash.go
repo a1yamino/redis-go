@@ -5,10 +5,10 @@ import (
 	"sync"
 )
 
-var (
-	hashMu sync.RWMutex
-	hash   = make(map[string]map[string]string)
-)
+// var (
+// 	hashMu sync.RWMutex
+// 	hash   = make(map[string]map[string]string)
+// )
 
 func HSetHandler(conn *Conn, args []Value) bool {
 	if len(args) != 3 {
@@ -20,13 +20,20 @@ func HSetHandler(conn *Conn, args []Value) bool {
 	field := args[1].String()
 	value := args[2].String()
 
-	hashMu.Lock()
-	if _, ok := hash[key]; !ok {
-		hash[key] = make(map[string]string)
+	dbMu.Lock()
+	if _, ok := db[key]; ok {
+		if db[key].typ != _Hash {
+			conn.Writer.WriteError("WRONGTYPE Operation against a key holding the wrong kind of value")
+			dbMu.Unlock()
+			return false
+		}
+		db[key].Lock()
+		db[key].value.(hash)[field] = value
+		db[key].Unlock()
+	} else {
+		db[key] = &entry{_Hash, map[string]string{field: value}, sync.RWMutex{}}
 	}
-	hash[key][field] = value
-	hashMu.Unlock()
-
+	dbMu.Unlock()
 	conn.Writer.WriteInteger(1)
 	return true
 }
@@ -40,10 +47,23 @@ func HGetHandler(conn *Conn, args []Value) bool {
 	key := args[0].String()
 	field := args[1].String()
 
-	hashMu.RLock()
-	value, ok := hash[key][field]
-	hashMu.RUnlock()
+	dbMu.RLock()
+	e, ok := db[key]
+	dbMu.RUnlock()
 
+	if !ok {
+		conn.Writer.WriteNull()
+		return true
+	}
+	e.RLock()
+	if e.typ != _Hash {
+		conn.Writer.WriteError("WRONGTYPE Operation against a key holding the wrong kind of value")
+		e.RUnlock()
+		return false
+	}
+
+	value, ok := e.value.(hash)[field]
+	e.RUnlock()
 	if !ok {
 		conn.Writer.WriteNull()
 		return true
@@ -61,12 +81,19 @@ func HGetAllHandler(conn *Conn, args []Value) bool {
 
 	key := args[0].String()
 
-	hashMu.RLock()
-	fields := hash[key]
-	hashMu.RUnlock()
+	dbMu.RLock()
+	hashEntry := db[key]
+	dbMu.RUnlock()
 
-	values := make([]Value, 0, len(fields)*2)
-	for field, value := range fields {
+	hashEntry.RLock()
+	if hashEntry.typ != _Hash {
+		conn.Writer.WriteError("WRONGTYPE Operation against a key holding the wrong kind of value")
+		hashEntry.RUnlock()
+		return false
+	}
+	hashV := hashEntry.value.(hash)
+	values := make([]Value, 0, len(hashV)*2)
+	for field, value := range hashV {
 		values = append(values, BulkString(field), BulkString(value))
 	}
 
@@ -89,22 +116,24 @@ func HDelHandler(conn *Conn, args []Value) bool {
 		fields = append(fields, arg.String())
 	}
 
-	hashMu.Lock()
-	if _, ok := hash[key]; !ok {
-		hashMu.Unlock()
+	dbMu.RLock()
+	hashEntry, ok := db[key]
+	if !ok {
+		dbMu.Unlock()
 		conn.Writer.WriteInteger(0)
 		return true
 	}
 
 	var count int
+	hashEntry.Lock()
+	hashV := hashEntry.value.(hash)
 	for _, field := range fields {
-		if _, ok := hash[key][field]; ok {
-			delete(hash[key], field)
+		if _, ok := hashV[field]; ok {
+			delete(hashV, field)
 			count++
 		}
 	}
-	hashMu.Unlock()
-
+	hashEntry.Unlock()
 	conn.Writer.WriteInteger(count)
 	return true
 }
@@ -117,16 +146,18 @@ func HLenHandler(conn *Conn, args []Value) bool {
 
 	key := args[0].String()
 
-	hashMu.RLock()
-	fields, ok := hash[key]
-	hashMu.RUnlock()
+	dbMu.RLock()
+	hashEntry, ok := db[key]
+	dbMu.RUnlock()
 
 	if !ok {
 		conn.Writer.WriteInteger(0)
 		return true
 	}
 
-	conn.Writer.WriteInteger(len(fields))
+	hashEntry.RLock()
+	conn.Writer.WriteInteger(len(hashEntry.value.(hash)))
+	hashEntry.RUnlock()
 	return true
 }
 
@@ -138,20 +169,22 @@ func HKeysHandler(conn *Conn, args []Value) bool {
 
 	key := args[0].String()
 
-	hashMu.RLock()
-	fields, ok := hash[key]
-	hashMu.RUnlock()
+	dbMu.RLock()
+	hashEntry, ok := db[key]
+	dbMu.RUnlock()
 
 	if !ok {
 		conn.Writer.WriteNull()
 		return true
 	}
 
-	values := make([]Value, 0, len(fields))
-	for field := range fields {
+	hashEntry.RLock()
+	hashV := hashEntry.value.(hash)
+	values := make([]Value, 0, len(hashV))
+	for field := range hashV {
 		values = append(values, BulkString(field))
 	}
-
+	hashEntry.RUnlock()
 	err := conn.Writer.WriteArray(Value{typ: ARRAY, array: values})
 	if err != nil {
 		fmt.Printf("write array failed: %v\n", err)
@@ -167,19 +200,22 @@ func HValsHandler(conn *Conn, args []Value) bool {
 
 	key := args[0].String()
 
-	hashMu.RLock()
-	fields, ok := hash[key]
-	hashMu.RUnlock()
+	dbMu.RLock()
+	hashEntry, ok := db[key]
+	dbMu.RUnlock()
 
 	if !ok {
 		conn.Writer.WriteNull()
 		return true
 	}
 
-	values := make([]Value, 0, len(fields))
-	for _, value := range fields {
+	hashEntry.RLock()
+	hashV := hashEntry.value.(hash)
+	values := make([]Value, 0, len(hashV))
+	for _, value := range hashV {
 		values = append(values, BulkString(value))
 	}
+	hashEntry.RUnlock()
 
 	err := conn.Writer.WriteArray(Value{typ: ARRAY, array: values})
 	if err != nil {

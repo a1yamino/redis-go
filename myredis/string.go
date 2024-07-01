@@ -19,7 +19,14 @@ func SetHandler(conn *Conn, args []Value) bool {
 	value := args[1].String()
 
 	dbMu.Lock()
-	db[key] = entry{typ: _String, value: value}
+	if _, ok := db[key]; ok {
+		if db[key].typ != _String {
+			conn.Writer.WriteError("WRONGTYPE Operation against a key holding the wrong kind of value")
+			dbMu.Unlock()
+			return false
+		}
+	}
+	db[key] = &entry{_String, value, sync.RWMutex{}}
 	dbMu.Unlock()
 
 	conn.Writer.WriteSimpleString("OK")
