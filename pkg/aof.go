@@ -1,4 +1,4 @@
-package myredis
+package pkg
 
 import (
 	"bufio"
@@ -20,7 +20,7 @@ type Aof struct {
 func NewAof(file string) (*Aof, error) {
 
 	if file == "" {
-		file = "myredis.aof"
+		file = "pkg.aof"
 	}
 
 	f, err := os.OpenFile(file, os.O_CREATE|os.O_RDWR, 0666)

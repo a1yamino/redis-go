@@ -1,4 +1,4 @@
-package myredis
+package pkg
 
 import (
 	"fmt"

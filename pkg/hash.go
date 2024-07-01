@@ -1,14 +1,9 @@
-package myredis
+package pkg
 
 import (
 	"fmt"
 	"sync"
 )
-
-// var (
-// 	hashMu sync.RWMutex
-// 	hash   = make(map[string]map[string]string)
-// )
 
 func HSetHandler(conn *Conn, args []Value) bool {
 	if len(args) != 3 {
