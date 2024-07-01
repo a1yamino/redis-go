@@ -1,6 +1,8 @@
 package myredis
 
-import "sync"
+import (
+	"sync"
+)
 
 var (
 	str   = make(map[string]string)
@@ -16,9 +18,9 @@ func SetHandler(conn *Conn, args []Value) bool {
 	key := args[0].String()
 	value := args[1].String()
 
-	strMu.Lock()
-	str[key] = value
-	strMu.Unlock()
+	dbMu.Lock()
+	db[key] = entry{typ: _String, value: value}
+	dbMu.Unlock()
 
 	conn.Writer.WriteSimpleString("OK")
 	return true
@@ -32,16 +34,21 @@ func GetHandler(conn *Conn, args []Value) bool {
 
 	key := args[0].String()
 
-	strMu.RLock()
-	value, ok := str[key]
-	strMu.RUnlock()
+	dbMu.RLock()
+	e, ok := db[key]
+	dbMu.RUnlock()
 
 	if !ok {
 		conn.Writer.WriteNull()
 		return true
 	}
 
-	conn.Writer.WriteBulkString(value)
+	if e.typ != _String {
+		conn.Writer.WriteError("WRONGTYPE Operation against a key holding the wrong kind of value")
+		return false
+	}
+
+	conn.Writer.WriteBulkString(e.value.(string))
 	return true
 }
 
@@ -53,16 +60,14 @@ func DelHandler(conn *Conn, args []Value) bool {
 
 	key := args[0].String()
 
-	strMu.Lock()
-	if _, ok := str[key]; !ok {
-		strMu.Unlock()
-
+	dbMu.Lock()
+	if _, ok := db[key]; !ok {
 		conn.Writer.WriteInteger(0)
+		dbMu.Unlock()
 		return true
 	}
-	delete(str, key)
-	strMu.Unlock()
-
+	delete(db, key)
+	dbMu.Unlock()
 	conn.Writer.WriteInteger(1)
 	return true
 }
@@ -78,9 +83,9 @@ func ExistsHandler(conn *Conn, args []Value) bool {
 	for _, arg := range args {
 		key := arg.String()
 
-		strMu.RLock()
-		_, ok := str[key]
-		strMu.RUnlock()
+		dbMu.RLock()
+		_, ok := db[key]
+		dbMu.RUnlock()
 		if ok {
 			result++
 		}
