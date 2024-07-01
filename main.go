@@ -2,12 +2,12 @@ package main
 
 import (
 	"log"
-	"redis/myredis"
+	"redis/pkg"
 )
 
 func main() {
 	log.Println("listening on :6379...")
-	server := myredis.NewServer(&myredis.Config{
+	server := pkg.NewServer(&pkg.Config{
 		EnableAof: false,
 	})
 	server.ListenAndServe(":6379")

@@ -1,4 +1,4 @@
-package myredis
+package pkg
 
 type CommandHandler struct {
 	Handler func(*Conn, []Value) bool
