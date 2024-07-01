@@ -14,6 +14,12 @@ func main() {
 		log.Fatal(err)
 	}
 
+	aof, err := NewAof("database.aof")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer aof.Close()
+
 	conn, err := l.Accept()
 	if err != nil {
 		log.Fatal(err)
@@ -49,6 +55,11 @@ func main() {
 			writer.Write(Value{typ: "string", str: ""})
 			continue
 		}
+
+		if cmd == "SET" || cmd == "HSET" {
+			aof.Write(value)
+		}
+
 		result := handler(args)
 		writer.Write(result)
 	}
