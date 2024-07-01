@@ -31,7 +31,7 @@ func HSetHandler(conn *Conn, args []Value) bool {
 		db[key].value.(hash)[field] = value
 		db[key].Unlock()
 	} else {
-		db[key] = &entry{_Hash, map[string]string{field: value}, sync.RWMutex{}}
+		db[key] = &entry{_Hash, hash{field: value}, sync.RWMutex{}}
 	}
 	dbMu.Unlock()
 	conn.Writer.WriteInteger(1)
