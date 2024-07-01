@@ -82,9 +82,12 @@ func HGetAllHandler(conn *Conn, args []Value) bool {
 	key := args[0].String()
 
 	dbMu.RLock()
-	hashEntry := db[key]
+	hashEntry, ok := db[key]
 	dbMu.RUnlock()
-
+	if !ok {
+		conn.Writer.WriteNull()
+		return true
+	}
 	hashEntry.RLock()
 	if hashEntry.typ != _Hash {
 		conn.Writer.WriteError("WRONGTYPE Operation against a key holding the wrong kind of value")
