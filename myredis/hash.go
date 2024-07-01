@@ -119,11 +119,11 @@ func HDelHandler(conn *Conn, args []Value) bool {
 	dbMu.RLock()
 	hashEntry, ok := db[key]
 	if !ok {
-		dbMu.Unlock()
+		dbMu.RUnlock()
 		conn.Writer.WriteInteger(0)
 		return true
 	}
-
+	dbMu.RUnlock()
 	var count int
 	hashEntry.Lock()
 	hashV := hashEntry.value.(hash)
