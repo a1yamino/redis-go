@@ -62,7 +62,7 @@ func RPushHandler(conn *Conn, args []Value) bool {
 			return false
 		}
 		e.Lock()
-		lst := e.value.(*qlist)
+		lst := e.value.(qlist)
 		for _, v := range values {
 			lst.pushRight(v.String())
 		}
@@ -101,7 +101,7 @@ func LPopHandler(conn *Conn, args []Value) bool {
 		return false
 	}
 	e.Lock()
-	lst := e.value.(*qlist)
+	lst := e.value.(qlist)
 	if lst.len == 0 {
 		conn.Writer.WriteNull()
 		e.Unlock()
@@ -137,7 +137,7 @@ func RPopHandler(conn *Conn, args []Value) bool {
 		return false
 	}
 	e.Lock()
-	lst := e.value.(*qlist)
+	lst := e.value.(qlist)
 	if lst.len == 0 {
 		conn.Writer.WriteNull()
 		e.Unlock()
@@ -174,7 +174,7 @@ func LLenHandler(conn *Conn, args []Value) bool {
 	}
 
 	e.RLock()
-	lst := e.value.(*qlist)
+	lst := e.value.(qlist)
 	l := lst.len
 	e.RUnlock()
 
@@ -214,7 +214,7 @@ func LRangeHandler(conn *Conn, args []Value) bool {
 	}
 
 	e.RLock()
-	lst := e.value.(*qlist)
+	lst := e.value.(qlist)
 	l := lst.len
 	if start < 0 {
 		start = l + start
