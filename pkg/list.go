@@ -229,8 +229,8 @@ func LRangeHandler(conn *Conn, args []Value) bool {
 		stop = 0
 	}
 	if start >= l {
-		conn.Writer.WriteArray(Value{typ: ARRAY, array: []Value{}})
 		e.RUnlock()
+		conn.Writer.WriteArray(Value{typ: ARRAY, array: []Value{}})
 		return true
 	}
 	if stop >= l {
@@ -246,7 +246,6 @@ func LRangeHandler(conn *Conn, args []Value) bool {
 		i++
 	}
 	e.RUnlock()
-
 	conn.Writer.WriteArray(Value{typ: ARRAY, array: values})
 	return true
 }
