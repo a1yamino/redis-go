@@ -32,7 +32,7 @@ func LPushHandler(conn *Conn, args []Value) bool {
 		}
 		e.Unlock()
 	} else {
-		l := qlist{}
+		l := &qlist{}
 		for _, v := range values {
 			l.pushLeft(v.String())
 		}
@@ -68,7 +68,7 @@ func RPushHandler(conn *Conn, args []Value) bool {
 		}
 		e.Unlock()
 	} else {
-		l := qlist{}
+		l := &qlist{}
 		for _, v := range values {
 			l.pushRight(v.String())
 		}
