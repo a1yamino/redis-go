@@ -15,5 +15,5 @@ func main() {
 	server := pkg.NewServer(&pkg.Config{
 		EnableAof: false,
 	})
-	server.ListenAndServe(":6379")
+	log.Fatal(server.ListenAndServe(":6379"))
 }

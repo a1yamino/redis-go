@@ -2,6 +2,7 @@ package pkg
 
 import (
 	. "container/list"
+	"strconv"
 	"sync"
 )
 
@@ -188,8 +189,16 @@ func LRangeHandler(conn *Conn, args []Value) bool {
 	}
 
 	key := args[0].String()
-	start := args[1].Integer()
-	stop := args[2].Integer()
+	start, err := strconv.Atoi(args[1].String())
+	if err != nil {
+		conn.Writer.WriteError("ERR value is not an integer or out of range")
+		return false
+	}
+	stop, err := strconv.Atoi(args[2].String())
+	if err != nil {
+		conn.Writer.WriteError("ERR value is not an integer or out of range")
+		return false
+	}
 
 	dbMu.RLock()
 	e, ok := db[key]
@@ -249,8 +258,16 @@ func LTrimHandler(conn *Conn, args []Value) bool {
 	}
 
 	key := args[0].String()
-	start := args[1].Integer()
-	stop := args[2].Integer()
+	start, err := strconv.Atoi(args[1].String())
+	if err != nil {
+		conn.Writer.WriteError("ERR value is not an integer or out of range")
+		return false
+	}
+	stop, err := strconv.Atoi(args[2].String())
+	if err != nil {
+		conn.Writer.WriteError("ERR value is not an integer or out of range")
+		return false
+	}
 
 	dbMu.Lock()
 	e, ok := db[key]
