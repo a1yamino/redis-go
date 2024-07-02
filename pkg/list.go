@@ -26,15 +26,15 @@ func LPushHandler(conn *Conn, args []Value) bool {
 			return false
 		}
 		e.Lock()
-		lst := e.value.(list)
+		lst := e.value.(qlist)
 		for _, v := range values {
-			lst.PushFront(v.String())
+			lst.pushLeft(v.String())
 		}
 		e.Unlock()
 	} else {
-		l := list(New())
+		l := qlist{}
 		for _, v := range values {
-			l.PushFront(v.String())
+			l.pushLeft(v.String())
 		}
 		db[key] = &entry{_List, l, sync.RWMutex{}}
 	}
@@ -62,15 +62,15 @@ func RPushHandler(conn *Conn, args []Value) bool {
 			return false
 		}
 		e.Lock()
-		lst := e.value.(list)
+		lst := e.value.(*qlist)
 		for _, v := range values {
-			lst.PushBack(v.String())
+			lst.pushRight(v.String())
 		}
 		e.Unlock()
 	} else {
-		l := list(New())
+		l := qlist{}
 		for _, v := range values {
-			l.PushBack(v.String())
+			l.pushRight(v.String())
 		}
 		db[key] = &entry{_List, l, sync.RWMutex{}}
 	}
@@ -101,14 +101,14 @@ func LPopHandler(conn *Conn, args []Value) bool {
 		return false
 	}
 	e.Lock()
-	lst := e.value.(list)
-	if lst.Len() == 0 {
+	lst := e.value.(*qlist)
+	if lst.len == 0 {
 		conn.Writer.WriteNull()
 		e.Unlock()
 		dbMu.Unlock()
 		return true
 	}
-	v := lst.Remove(lst.Front()).(string)
+	v := lst.popLeft()
 	e.Unlock()
 	dbMu.Unlock()
 
@@ -137,14 +137,14 @@ func RPopHandler(conn *Conn, args []Value) bool {
 		return false
 	}
 	e.Lock()
-	lst := e.value.(list)
-	if lst.Len() == 0 {
+	lst := e.value.(*qlist)
+	if lst.len == 0 {
 		conn.Writer.WriteNull()
 		e.Unlock()
 		dbMu.Unlock()
 		return true
 	}
-	v := lst.Remove(lst.Back()).(string)
+	v := lst.popRight()
 	e.Unlock()
 	dbMu.Unlock()
 
@@ -174,8 +174,8 @@ func LLenHandler(conn *Conn, args []Value) bool {
 	}
 
 	e.RLock()
-	lst := e.value.(list)
-	l := lst.Len()
+	lst := e.value.(*qlist)
+	l := lst.len
 	e.RUnlock()
 
 	conn.Writer.WriteInteger(l)
@@ -214,8 +214,8 @@ func LRangeHandler(conn *Conn, args []Value) bool {
 	}
 
 	e.RLock()
-	lst := e.value.(list)
-	l := lst.Len()
+	lst := e.value.(*qlist)
+	l := lst.len
 	if start < 0 {
 		start = l + start
 	}
@@ -238,13 +238,10 @@ func LRangeHandler(conn *Conn, args []Value) bool {
 	}
 
 	values := make([]Value, stop-start+1)
-	i := 0
-	for e := lst.Front(); e != nil; e = e.Next() {
-		if i >= start && i <= stop {
-			values[i-start] = BulkString(e.Value.(string))
-		}
-		i++
+	for i, s := range lst.getRange(start, stop) {
+		values[i] = BulkString(s)
 	}
+
 	e.RUnlock()
 	conn.Writer.WriteArray(Value{typ: ARRAY, array: values})
 	return true
