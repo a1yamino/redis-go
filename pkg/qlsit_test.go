@@ -122,3 +122,21 @@ func TestPop(t *testing.T) {
 		t.Errorf("expected empty, got %s", s)
 	}
 }
+
+func TestGetRange(t *testing.T) {
+	ql := &qlist{}
+	ql.pushLeft("a")
+	ql.pushRight("b")
+	ql.pushLeft("c")
+	ql.pushRight("d")
+
+	s := ql.getRange(0, 4-1)
+
+	if len(s) != 4 {
+		t.Errorf("expected 4, got %d", len(s))
+	}
+
+	for i, v := range s {
+		t.Logf("%d: %s", i, v)
+	}
+}

@@ -35,7 +35,7 @@ func (ql *qlist) pushLeft(data string) {
 	if h.direction == Right || h.len >= maxLen {
 		n := &qnode{data: []string{data}, direction: Left, len: 1}
 		n.next = h
-		h.prev = nil
+		h.prev = n
 		ql.len++
 		ql.head = n
 	}
@@ -60,7 +60,7 @@ func (ql *qlist) pushRight(data string) {
 	if t.direction == Left || t.len >= maxLen {
 		n := &qnode{data: []string{data}, direction: Right, len: 1}
 		n.prev = t
-		t.next = nil
+		t.next = n
 		ql.tail = n
 		ql.len++
 	}
@@ -126,13 +126,29 @@ func (ql *qlist) getRange(start, stop int) []string {
 	}
 
 	res := make([]string, 0, stop-start+1)
+	var isleft int
+	var isnegative = 1
+	if h.direction == Left {
+		isleft = 1
+		isnegative = -1
+	}
 
 	for i := start; i <= stop; i++ {
-		res = append(res, h.data[i])
+		res = append(res, h.data[(h.len-1)*isleft+isnegative*i])
 		if i == h.len-1 {
-			h = h.next
-			i = 0
 			stop -= h.len
+			h = h.next
+			if h == nil {
+				break
+			}
+			if h.direction == Left {
+				isleft = 1
+				isnegative = -1
+			} else {
+				isleft = 0
+				isnegative = 1
+			}
+			i = -1
 		}
 	}
 	return res
