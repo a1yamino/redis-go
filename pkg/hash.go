@@ -5,6 +5,8 @@ import (
 	"sync"
 )
 
+type hash map[string]string
+
 func HSetHandler(conn *Conn, args []Value) bool {
 	if len(args) != 3 {
 		conn.Writer.WriteError("ERR wrong number of arguments for 'hset' command")

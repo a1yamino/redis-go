@@ -14,11 +14,16 @@ func (h *CommandHandler) call(conn *Conn, args []Value) bool {
 }
 
 var defaultHandlers = map[string]CommandHandler{
-	"PING":    {Handler: pingHandler, persist: false},
-	"SET":     {Handler: SetHandler, persist: true},
-	"GET":     {Handler: GetHandler, persist: false},
-	"DEL":     {Handler: DelHandler, persist: true},
-	"EXISTS":  {Handler: ExistsHandler, persist: false},
+	// Connection
+	"PING": {Handler: pingHandler, persist: false},
+
+	// String
+	"SET":    {Handler: SetHandler, persist: true},
+	"GET":    {Handler: GetHandler, persist: false},
+	"DEL":    {Handler: DelHandler, persist: true},
+	"EXISTS": {Handler: ExistsHandler, persist: false},
+
+	// Hash
 	"HSET":    {Handler: HSetHandler, persist: true},
 	"HGET":    {Handler: HGetHandler, persist: false},
 	"HGETALL": {Handler: HGetAllHandler, persist: false},
@@ -26,6 +31,15 @@ var defaultHandlers = map[string]CommandHandler{
 	"HLEN":    {Handler: HLenHandler, persist: false},
 	"HKEYS":   {Handler: HKeysHandler, persist: false},
 	"HVALS":   {Handler: HValsHandler, persist: false},
+
+	// List
+	"LPUSH":  {Handler: LPushHandler, persist: true},
+	"RPUSH":  {Handler: RPushHandler, persist: true},
+	"LPOP":   {Handler: LPopHandler, persist: true},
+	"RPOP":   {Handler: RPopHandler, persist: true},
+	"LRANGE": {Handler: LRangeHandler, persist: false},
+	"LLEN":   {Handler: LLenHandler, persist: false},
+	"LTRIM":  {Handler: LTrimHandler, persist: true},
 }
 
 func pingHandler(conn *Conn, args []Value) bool {
