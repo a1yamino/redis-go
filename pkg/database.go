@@ -23,5 +23,3 @@ var (
 	dbMu sync.RWMutex
 	db   = make(map[string]*entry)
 )
-
-type hash map[string]string

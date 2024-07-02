@@ -43,12 +43,26 @@ func TestWrite(t *testing.T) {
 
 func BenchmarkSprintf(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		_ = fmt.Sprintf("%s %s", "foo", "bar")
+		_ = []byte(fmt.Sprintf("%s %s", "foo", "bar"))
 	}
 }
 
 func BenchmarkPlus(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		_ = "foo" + " " + "bar"
+		_ = []byte("foo" + " " + "bar")
+	}
+}
+
+func BenchmarkWriteString(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		buf := &bytes.Buffer{}
+		buf.WriteString("foo bar")
+		_ = buf.Bytes()
+	}
+}
+
+func BenchmarkJoin(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_ = []byte(strings.Join([]string{"foo", "bar"}, " "))
 	}
 }
