@@ -103,6 +103,7 @@ func LPopHandler(conn *Conn, args []Value) bool {
 	e.Lock()
 	lst := e.value.(qlist)
 	if lst.len == 0 {
+		delete(db, key)
 		conn.Writer.WriteNull()
 		e.Unlock()
 		dbMu.Unlock()
@@ -139,6 +140,7 @@ func RPopHandler(conn *Conn, args []Value) bool {
 	e.Lock()
 	lst := e.value.(qlist)
 	if lst.len == 0 {
+		delete(db, key)
 		conn.Writer.WriteNull()
 		e.Unlock()
 		dbMu.Unlock()

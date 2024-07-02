@@ -144,6 +144,10 @@ func (ql *qlist) popLeft() string {
 		return ""
 	}
 
+	if h.len == 0 {
+		return ""
+	}
+
 	var v string
 
 	if h.direction == Right {
@@ -170,6 +174,10 @@ func (ql *qlist) popLeft() string {
 func (ql *qlist) popRight() string {
 	t := ql.tail
 	if t == nil {
+		return ""
+	}
+
+	if t.len == 0 {
 		return ""
 	}
 

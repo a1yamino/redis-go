@@ -62,3 +62,63 @@ func BenchmarkListPush(b *testing.B) {
 		ll.PushBack("b")
 	}
 }
+
+func TestPopLeft(t *testing.T) {
+	ql := &qlist{}
+	ql.pushLeft("a")
+	ql.pushLeft("b")
+	ql.pushLeft("c")
+
+	if s := ql.popLeft(); s != "c" {
+		t.Errorf("expected c, got %s", s)
+	}
+	if s := ql.popLeft(); s != "b" {
+		t.Errorf("expected b, got %s", s)
+	}
+	if s := ql.popLeft(); s != "a" {
+		t.Errorf("expected a, got %s", s)
+	}
+	if s := ql.popLeft(); s != "" {
+		t.Errorf("expected empty, got %s", s)
+	}
+}
+
+func TestPopRight(t *testing.T) {
+	ql := &qlist{}
+	ql.pushRight("a")
+	ql.pushRight("b")
+	ql.pushRight("c")
+
+	if s := ql.popRight(); s != "c" {
+		t.Errorf("expected c, got %s", s)
+	}
+	if s := ql.popRight(); s != "b" {
+		t.Errorf("expected b, got %s", s)
+	}
+	if s := ql.popRight(); s != "a" {
+		t.Errorf("expected a, got %s", s)
+	}
+	if s := ql.popRight(); s != "" {
+		t.Errorf("expected empty, got %s", s)
+	}
+}
+
+func TestPop(t *testing.T) {
+	ql := &qlist{}
+	ql.pushLeft("a")
+	ql.pushRight("b")
+	ql.pushLeft("c")
+
+	if s := ql.popLeft(); s != "c" {
+		t.Errorf("expected c, got %s", s)
+	}
+	if s := ql.popRight(); s != "b" {
+		t.Errorf("expected b, got %s", s)
+	}
+	if s := ql.popLeft(); s != "a" {
+		t.Errorf("expected a, got %s", s)
+	}
+	if s := ql.popRight(); s != "" {
+		t.Errorf("expected empty, got %s", s)
+	}
+}
