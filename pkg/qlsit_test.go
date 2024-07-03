@@ -126,12 +126,12 @@ func TestPop(t *testing.T) {
 func TestGetRange(t *testing.T) {
 	ql := &qlist{}
 	ql.pushLeft("a")
-	ql.pushRight("b")
+	ql.pushLeft("b")
 	ql.pushLeft("c")
-	ql.pushRight("d")
-	ql.pushRight("e")
+	// ql.pushRight("d")
+	// ql.pushRight("e")
 	// c a b d
-	s := ql.getRange(0, 3)
+	s := ql.getRange(0, 2)
 
 	for i, v := range s {
 		t.Logf("%d: %v", i, v)

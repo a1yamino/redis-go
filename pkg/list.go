@@ -239,8 +239,11 @@ func LRangeHandler(conn *Conn, args []Value) bool {
 		stop = l - 1
 	}
 
-	values := make([]Value, stop-start+1)
-	for _, qr := range lst.getRange(start, stop) {
+	values := make([]Value, 0, stop-start+1)
+	qrs := lst.getRange(start, stop)
+	e.RUnlock()
+
+	for _, qr := range qrs {
 		if qr.direction == Left {
 			for i := len(qr.data) - 1; i >= 0; i-- {
 				values = append(values, BulkString(qr.data[i]))
@@ -253,7 +256,6 @@ func LRangeHandler(conn *Conn, args []Value) bool {
 		}
 	}
 
-	e.RUnlock()
 	conn.Writer.WriteArray(Value{typ: ARRAY, array: values})
 	return true
 }
