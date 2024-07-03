@@ -240,8 +240,17 @@ func LRangeHandler(conn *Conn, args []Value) bool {
 	}
 
 	values := make([]Value, stop-start+1)
-	for i, s := range lst.getRange(start, stop) {
-		values[i] = BulkString(s)
+	for _, qr := range lst.getRange(start, stop) {
+		if qr.direction == Left {
+			for i := len(qr.data) - 1; i >= 0; i-- {
+				values = append(values, BulkString(qr.data[i]))
+			}
+		} else {
+			for _, v := range qr.data {
+				values = append(values, BulkString(v))
+			}
+
+		}
 	}
 
 	e.RUnlock()

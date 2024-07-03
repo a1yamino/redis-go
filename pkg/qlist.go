@@ -113,7 +113,12 @@ func (ql *qlist) getRight() string {
 	return v
 }
 
-func (ql *qlist) getRange(start, stop int) []string {
+type qrange struct {
+	data      []string
+	direction bool
+}
+
+func (ql *qlist) getRange(start, stop int) []qrange {
 	h := ql.head
 	if h == nil {
 		return nil
@@ -125,30 +130,32 @@ func (ql *qlist) getRange(start, stop int) []string {
 		stop -= h.len
 	}
 
-	res := make([]string, 0, stop-start+1)
-	var isleft int
-	var isnegative = 1
-	if h.direction == Left {
-		isleft = 1
-		isnegative = -1
-	}
+	res := make([]qrange, 0)
+	for {
 
-	for i := start; i <= stop; i++ {
-		res = append(res, h.data[(h.len-1)*isleft+isnegative*i])
-		if i == h.len-1 {
-			stop -= h.len
-			h = h.next
-			if h == nil {
-				break
-			}
+		if stop < 0 {
+			break
+		}
+
+		if stop >= h.len {
 			if h.direction == Left {
-				isleft = 1
-				isnegative = -1
+				res = append(res, qrange{h.data[:h.len-start], h.direction})
 			} else {
-				isleft = 0
-				isnegative = 1
+				res = append(res, qrange{h.data[start:], h.direction})
 			}
-			i = -1
+		} else {
+			if h.direction == Left {
+				res = append(res, qrange{h.data[h.len-stop-1:], h.direction})
+			} else {
+				res = append(res, qrange{h.data[:stop+1], h.direction})
+			}
+		}
+
+		stop -= h.len
+		start = 0
+		h = h.next
+		if h == nil {
+			break
 		}
 	}
 	return res

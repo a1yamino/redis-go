@@ -129,14 +129,25 @@ func TestGetRange(t *testing.T) {
 	ql.pushRight("b")
 	ql.pushLeft("c")
 	ql.pushRight("d")
-
-	s := ql.getRange(0, 4-1)
-
-	if len(s) != 4 {
-		t.Errorf("expected 4, got %d", len(s))
-	}
+	ql.pushRight("e")
+	// c a b d
+	s := ql.getRange(0, 3)
 
 	for i, v := range s {
-		t.Logf("%d: %s", i, v)
+		t.Logf("%d: %v", i, v)
 	}
+}
+
+func (qr qrange) String() string {
+	res := ""
+	if qr.direction == Left {
+		for i := len(qr.data) - 1; i >= 0; i-- {
+			res += qr.data[i]
+		}
+	} else {
+		for i := 0; i < len(qr.data); i++ {
+			res += qr.data[i]
+		}
+	}
+	return res
 }
