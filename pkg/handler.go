@@ -40,6 +40,15 @@ var defaultHandlers = map[string]CommandHandler{
 	"LRANGE": {Handler: LRangeHandler, persist: false},
 	"LLEN":   {Handler: LLenHandler, persist: false},
 	"LTRIM":  {Handler: LTrimHandler, persist: true},
+
+	// Set
+	"SADD":        {Handler: SAddHandler, persist: true},
+	"SCARD":       {Handler: SCardHandler, persist: false},
+	"SMEMBERS":    {Handler: SMembersHandler, persist: false},
+	"SREM":        {Handler: SRemHandler, persist: true},
+	"SPOP":        {Handler: SPopHandler, persist: true},
+	"SISMEMBER":   {Handler: SIsMemberHandler, persist: false},
+	"SRANDMEMBER": {Handler: SRandMemberHandler, persist: false},
 }
 
 func pingHandler(w IWriter, args []Value) bool {
