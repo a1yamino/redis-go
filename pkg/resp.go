@@ -130,7 +130,7 @@ func (r *Resp) Read() (Value, error) {
 	case '\n':
 	case '\r':
 	}
-	return Value{}, fmt.Errorf("unknowntype: %v\n", string(_type))
+	return Value{}, fmt.Errorf("unknowntype: %v", string(_type))
 }
 
 func (r *Resp) readArray() (Value, error) {
@@ -174,9 +174,19 @@ func (r *Resp) readBulk() (Value, error) {
 }
 
 // Writer
+type IWriter interface {
+	WriteSimpleString(str string) error
+	WriteError(str string) error
+	WriteInteger(i int) error
+	WriteBulkString(str string) error
+	WriteNull() error
+	WriteArray(value Value) error
+}
 type Writer struct {
 	w io.Writer
 }
+
+var _ IWriter = &Writer{}
 
 func NewWriter(w io.Writer) *Writer {
 	return &Writer{w}

@@ -9,9 +9,9 @@ var (
 	strMu sync.RWMutex
 )
 
-func SetHandler(conn *Conn, args []Value) bool {
+func SetHandler(w IWriter, args []Value) bool {
 	if len(args) != 2 {
-		conn.Writer.WriteError("ERR wrong number of arguments for 'set' command")
+		w.WriteError("ERR wrong number of arguments for 'set' command")
 		return false
 	}
 
@@ -21,7 +21,7 @@ func SetHandler(conn *Conn, args []Value) bool {
 	dbMu.Lock()
 	if _, ok := db[key]; ok {
 		if db[key].typ != _String {
-			conn.Writer.WriteError("WRONGTYPE Operation against a key holding the wrong kind of value")
+			w.WriteError("WRONGTYPE Operation against a key holding the wrong kind of value")
 			dbMu.Unlock()
 			return false
 		}
@@ -29,13 +29,13 @@ func SetHandler(conn *Conn, args []Value) bool {
 	db[key] = &entry{_String, value, sync.RWMutex{}}
 	dbMu.Unlock()
 
-	conn.Writer.WriteSimpleString("OK")
+	w.WriteSimpleString("OK")
 	return true
 }
 
-func GetHandler(conn *Conn, args []Value) bool {
+func GetHandler(w IWriter, args []Value) bool {
 	if len(args) != 1 {
-		conn.Writer.WriteError("ERR wrong number of arguments for 'get' command")
+		w.WriteError("ERR wrong number of arguments for 'get' command")
 		return false
 	}
 
@@ -46,22 +46,22 @@ func GetHandler(conn *Conn, args []Value) bool {
 	dbMu.RUnlock()
 
 	if !ok {
-		conn.Writer.WriteNull()
+		w.WriteNull()
 		return true
 	}
 
 	if e.typ != _String {
-		conn.Writer.WriteError("WRONGTYPE Operation against a key holding the wrong kind of value")
+		w.WriteError("WRONGTYPE Operation against a key holding the wrong kind of value")
 		return false
 	}
 
-	conn.Writer.WriteBulkString(e.value.(string))
+	w.WriteBulkString(e.value.(string))
 	return true
 }
 
-func DelHandler(conn *Conn, args []Value) bool {
+func DelHandler(w IWriter, args []Value) bool {
 	if len(args) != 1 {
-		conn.Writer.WriteError("ERR wrong number of arguments for 'del' command")
+		w.WriteError("ERR wrong number of arguments for 'del' command")
 		return false
 	}
 
@@ -69,19 +69,19 @@ func DelHandler(conn *Conn, args []Value) bool {
 
 	dbMu.Lock()
 	if _, ok := db[key]; !ok {
-		conn.Writer.WriteInteger(0)
+		w.WriteInteger(0)
 		dbMu.Unlock()
 		return true
 	}
 	delete(db, key)
 	dbMu.Unlock()
-	conn.Writer.WriteInteger(1)
+	w.WriteInteger(1)
 	return true
 }
 
-func ExistsHandler(conn *Conn, args []Value) bool {
+func ExistsHandler(w IWriter, args []Value) bool {
 	if len(args) < 1 {
-		conn.Writer.WriteError("ERR wrong number of arguments for 'exist' command")
+		w.WriteError("ERR wrong number of arguments for 'exist' command")
 		return false
 	}
 
@@ -97,6 +97,6 @@ func ExistsHandler(conn *Conn, args []Value) bool {
 			result++
 		}
 	}
-	conn.Writer.WriteInteger(result)
+	w.WriteInteger(result)
 	return true
 }

@@ -7,9 +7,9 @@ import (
 
 type hash map[string]string
 
-func HSetHandler(conn *Conn, args []Value) bool {
+func HSetHandler(w IWriter, args []Value) bool {
 	if len(args) != 3 {
-		conn.Writer.WriteError("ERR wrong number of arguments for 'hset' command")
+		w.WriteError("ERR wrong number of arguments for 'hset' command")
 		return false
 	}
 
@@ -20,7 +20,7 @@ func HSetHandler(conn *Conn, args []Value) bool {
 	dbMu.Lock()
 	if _, ok := db[key]; ok {
 		if db[key].typ != _Hash {
-			conn.Writer.WriteError("WRONGTYPE Operation against a key holding the wrong kind of value")
+			w.WriteError("WRONGTYPE Operation against a key holding the wrong kind of value")
 			dbMu.Unlock()
 			return false
 		}
@@ -31,13 +31,13 @@ func HSetHandler(conn *Conn, args []Value) bool {
 		db[key] = &entry{_Hash, hash{field: value}, sync.RWMutex{}}
 	}
 	dbMu.Unlock()
-	conn.Writer.WriteInteger(1)
+	w.WriteInteger(1)
 	return true
 }
 
-func HGetHandler(conn *Conn, args []Value) bool {
+func HGetHandler(w IWriter, args []Value) bool {
 	if len(args) != 2 {
-		conn.Writer.WriteError("ERR wrong number of arguments for 'hget' command")
+		w.WriteError("ERR wrong number of arguments for 'hget' command")
 		return false
 	}
 
@@ -49,12 +49,12 @@ func HGetHandler(conn *Conn, args []Value) bool {
 	dbMu.RUnlock()
 
 	if !ok {
-		conn.Writer.WriteNull()
+		w.WriteNull()
 		return true
 	}
 	e.RLock()
 	if e.typ != _Hash {
-		conn.Writer.WriteError("WRONGTYPE Operation against a key holding the wrong kind of value")
+		w.WriteError("WRONGTYPE Operation against a key holding the wrong kind of value")
 		e.RUnlock()
 		return false
 	}
@@ -62,17 +62,17 @@ func HGetHandler(conn *Conn, args []Value) bool {
 	value, ok := e.value.(hash)[field]
 	e.RUnlock()
 	if !ok {
-		conn.Writer.WriteNull()
+		w.WriteNull()
 		return true
 	}
 
-	conn.Writer.WriteBulkString(value)
+	w.WriteBulkString(value)
 	return true
 }
 
-func HGetAllHandler(conn *Conn, args []Value) bool {
+func HGetAllHandler(w IWriter, args []Value) bool {
 	if len(args) != 1 {
-		conn.Writer.WriteError("ERR wrong number of arguments for 'hgetall' command")
+		w.WriteError("ERR wrong number of arguments for 'hgetall' command")
 		return false
 	}
 
@@ -82,12 +82,12 @@ func HGetAllHandler(conn *Conn, args []Value) bool {
 	hashEntry, ok := db[key]
 	dbMu.RUnlock()
 	if !ok {
-		conn.Writer.WriteNull()
+		w.WriteNull()
 		return true
 	}
 	hashEntry.RLock()
 	if hashEntry.typ != _Hash {
-		conn.Writer.WriteError("WRONGTYPE Operation against a key holding the wrong kind of value")
+		w.WriteError("WRONGTYPE Operation against a key holding the wrong kind of value")
 		hashEntry.RUnlock()
 		return false
 	}
@@ -97,16 +97,16 @@ func HGetAllHandler(conn *Conn, args []Value) bool {
 		values = append(values, BulkString(field), BulkString(value))
 	}
 
-	err := conn.Writer.WriteArray(Value{typ: ARRAY, array: values})
+	err := w.WriteArray(Value{typ: ARRAY, array: values})
 	if err != nil {
 		fmt.Printf("write array failed: %v\n", err)
 	}
 	return true
 }
 
-func HDelHandler(conn *Conn, args []Value) bool {
+func HDelHandler(w IWriter, args []Value) bool {
 	if len(args) < 2 {
-		conn.Writer.WriteError("ERR wrong number of arguments for 'hdel' command")
+		w.WriteError("ERR wrong number of arguments for 'hdel' command")
 		return false
 	}
 
@@ -120,7 +120,7 @@ func HDelHandler(conn *Conn, args []Value) bool {
 	hashEntry, ok := db[key]
 	if !ok {
 		dbMu.RUnlock()
-		conn.Writer.WriteInteger(0)
+		w.WriteInteger(0)
 		return true
 	}
 	dbMu.RUnlock()
@@ -134,13 +134,13 @@ func HDelHandler(conn *Conn, args []Value) bool {
 		}
 	}
 	hashEntry.Unlock()
-	conn.Writer.WriteInteger(count)
+	w.WriteInteger(count)
 	return true
 }
 
-func HLenHandler(conn *Conn, args []Value) bool {
+func HLenHandler(w IWriter, args []Value) bool {
 	if len(args) != 1 {
-		conn.Writer.WriteError("ERR wrong number of arguments for 'hlen' command")
+		w.WriteError("ERR wrong number of arguments for 'hlen' command")
 		return false
 	}
 
@@ -151,19 +151,19 @@ func HLenHandler(conn *Conn, args []Value) bool {
 	dbMu.RUnlock()
 
 	if !ok {
-		conn.Writer.WriteInteger(0)
+		w.WriteInteger(0)
 		return true
 	}
 
 	hashEntry.RLock()
-	conn.Writer.WriteInteger(len(hashEntry.value.(hash)))
+	w.WriteInteger(len(hashEntry.value.(hash)))
 	hashEntry.RUnlock()
 	return true
 }
 
-func HKeysHandler(conn *Conn, args []Value) bool {
+func HKeysHandler(w IWriter, args []Value) bool {
 	if len(args) != 1 {
-		conn.Writer.WriteError("ERR wrong number of arguments for 'hkeys' command")
+		w.WriteError("ERR wrong number of arguments for 'hkeys' command")
 		return false
 	}
 
@@ -174,7 +174,7 @@ func HKeysHandler(conn *Conn, args []Value) bool {
 	dbMu.RUnlock()
 
 	if !ok {
-		conn.Writer.WriteNull()
+		w.WriteNull()
 		return true
 	}
 
@@ -185,16 +185,16 @@ func HKeysHandler(conn *Conn, args []Value) bool {
 		values = append(values, BulkString(field))
 	}
 	hashEntry.RUnlock()
-	err := conn.Writer.WriteArray(Value{typ: ARRAY, array: values})
+	err := w.WriteArray(Value{typ: ARRAY, array: values})
 	if err != nil {
 		fmt.Printf("write array failed: %v\n", err)
 	}
 	return true
 }
 
-func HValsHandler(conn *Conn, args []Value) bool {
+func HValsHandler(w IWriter, args []Value) bool {
 	if len(args) != 1 {
-		conn.Writer.WriteError("ERR wrong number of arguments for 'hvals' command")
+		w.WriteError("ERR wrong number of arguments for 'hvals' command")
 		return false
 	}
 
@@ -205,7 +205,7 @@ func HValsHandler(conn *Conn, args []Value) bool {
 	dbMu.RUnlock()
 
 	if !ok {
-		conn.Writer.WriteNull()
+		w.WriteNull()
 		return true
 	}
 
@@ -217,7 +217,7 @@ func HValsHandler(conn *Conn, args []Value) bool {
 	}
 	hashEntry.RUnlock()
 
-	err := conn.Writer.WriteArray(Value{typ: ARRAY, array: values})
+	err := w.WriteArray(Value{typ: ARRAY, array: values})
 	if err != nil {
 		fmt.Printf("write array failed: %v\n", err)
 	}

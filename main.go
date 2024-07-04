@@ -7,6 +7,7 @@ import (
 	"redis/pkg"
 
 	"github.com/panjf2000/gnet/v2"
+	"github.com/panjf2000/gnet/v2/pkg/pool/goroutine"
 )
 
 // func main() {
@@ -21,7 +22,9 @@ import (
 // }
 
 func main() {
-	srv := pkg.NewGServer("tcp", ":6379", true)
+	p := goroutine.Default()
+	defer p.Release()
+	srv := pkg.NewGServer("tcp", ":6379", true, p)
 	go func() {
 		log.Println(http.ListenAndServe("localhost:6060", nil))
 	}()

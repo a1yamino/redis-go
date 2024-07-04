@@ -108,7 +108,7 @@ func (s *Server) handleConn(conn net.Conn) error {
 			continue
 		}
 
-		if !handler.call(c, req[1:]) {
+		if !handler.call(c.Writer, req[1:]) {
 			return nil
 		}
 
@@ -169,12 +169,9 @@ func bootstrapAof(s *Server) {
 			return true
 		}
 
-		// create fake connection with fake writer
-		conn := &Conn{
-			Writer: NewWriter(io.Discard),
-		}
+		// create fake writer
 
-		handler.call(conn, cmds[1:])
+		handler.call(NewWriter(io.Discard), cmds[1:])
 
 		return true
 	})

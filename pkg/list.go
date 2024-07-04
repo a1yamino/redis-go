@@ -8,9 +8,9 @@ import (
 
 type list = *List
 
-func LPushHandler(conn *Conn, args []Value) bool {
+func LPushHandler(w IWriter, args []Value) bool {
 	if len(args) < 2 {
-		conn.Writer.WriteError("ERR wrong number of arguments for 'lpush' command")
+		w.WriteError("ERR wrong number of arguments for 'lpush' command")
 		return false
 	}
 
@@ -21,7 +21,7 @@ func LPushHandler(conn *Conn, args []Value) bool {
 	e, ok := db[key]
 	if ok {
 		if e.typ != _List {
-			conn.Writer.WriteError("WRONGTYPE Operation against a key holding the wrong kind of value")
+			w.WriteError("WRONGTYPE Operation against a key holding the wrong kind of value")
 			dbMu.Unlock()
 			return false
 		}
@@ -40,13 +40,13 @@ func LPushHandler(conn *Conn, args []Value) bool {
 	}
 	dbMu.Unlock()
 
-	conn.Writer.WriteInteger(len(values))
+	w.WriteInteger(len(values))
 	return true
 }
 
-func RPushHandler(conn *Conn, args []Value) bool {
+func RPushHandler(w IWriter, args []Value) bool {
 	if len(args) < 2 {
-		conn.Writer.WriteError("ERR wrong number of arguments for 'rpush' command")
+		w.WriteError("ERR wrong number of arguments for 'rpush' command")
 		return false
 	}
 
@@ -57,7 +57,7 @@ func RPushHandler(conn *Conn, args []Value) bool {
 	e, ok := db[key]
 	if ok {
 		if e.typ != _List {
-			conn.Writer.WriteError("WRONGTYPE Operation against a key holding the wrong kind of value")
+			w.WriteError("WRONGTYPE Operation against a key holding the wrong kind of value")
 			dbMu.Unlock()
 			return false
 		}
@@ -76,13 +76,13 @@ func RPushHandler(conn *Conn, args []Value) bool {
 	}
 	dbMu.Unlock()
 
-	conn.Writer.WriteInteger(len(values))
+	w.WriteInteger(len(values))
 	return true
 }
 
-func LPopHandler(conn *Conn, args []Value) bool {
+func LPopHandler(w IWriter, args []Value) bool {
 	if len(args) != 1 {
-		conn.Writer.WriteError("ERR wrong number of arguments for 'lpop' command")
+		w.WriteError("ERR wrong number of arguments for 'lpop' command")
 		return false
 	}
 
@@ -91,12 +91,12 @@ func LPopHandler(conn *Conn, args []Value) bool {
 	dbMu.Lock()
 	e, ok := db[key]
 	if !ok {
-		conn.Writer.WriteNull()
+		w.WriteNull()
 		dbMu.Unlock()
 		return true
 	}
 	if e.typ != _List {
-		conn.Writer.WriteError("WRONGTYPE Operation against a key holding the wrong kind of value")
+		w.WriteError("WRONGTYPE Operation against a key holding the wrong kind of value")
 		dbMu.Unlock()
 		return false
 	}
@@ -104,7 +104,7 @@ func LPopHandler(conn *Conn, args []Value) bool {
 	lst := e.value.(*qlist)
 	if lst.len == 0 {
 		delete(db, key)
-		conn.Writer.WriteNull()
+		w.WriteNull()
 		e.Unlock()
 		dbMu.Unlock()
 		return true
@@ -113,13 +113,13 @@ func LPopHandler(conn *Conn, args []Value) bool {
 	e.Unlock()
 	dbMu.Unlock()
 
-	conn.Writer.WriteBulkString(v)
+	w.WriteBulkString(v)
 	return true
 }
 
-func RPopHandler(conn *Conn, args []Value) bool {
+func RPopHandler(w IWriter, args []Value) bool {
 	if len(args) != 1 {
-		conn.Writer.WriteError("ERR wrong number of arguments for 'rpop' command")
+		w.WriteError("ERR wrong number of arguments for 'rpop' command")
 		return false
 	}
 
@@ -128,12 +128,12 @@ func RPopHandler(conn *Conn, args []Value) bool {
 	dbMu.Lock()
 	e, ok := db[key]
 	if !ok {
-		conn.Writer.WriteNull()
+		w.WriteNull()
 		dbMu.Unlock()
 		return true
 	}
 	if e.typ != _List {
-		conn.Writer.WriteError("WRONGTYPE Operation against a key holding the wrong kind of value")
+		w.WriteError("WRONGTYPE Operation against a key holding the wrong kind of value")
 		dbMu.Unlock()
 		return false
 	}
@@ -141,7 +141,7 @@ func RPopHandler(conn *Conn, args []Value) bool {
 	lst := e.value.(*qlist)
 	if lst.len == 0 {
 		delete(db, key)
-		conn.Writer.WriteNull()
+		w.WriteNull()
 		e.Unlock()
 		dbMu.Unlock()
 		return true
@@ -150,13 +150,13 @@ func RPopHandler(conn *Conn, args []Value) bool {
 	e.Unlock()
 	dbMu.Unlock()
 
-	conn.Writer.WriteBulkString(v)
+	w.WriteBulkString(v)
 	return true
 }
 
-func LLenHandler(conn *Conn, args []Value) bool {
+func LLenHandler(w IWriter, args []Value) bool {
 	if len(args) != 1 {
-		conn.Writer.WriteError("ERR wrong number of arguments for 'llen' command")
+		w.WriteError("ERR wrong number of arguments for 'llen' command")
 		return false
 	}
 
@@ -167,11 +167,11 @@ func LLenHandler(conn *Conn, args []Value) bool {
 	dbMu.RUnlock()
 
 	if !ok {
-		conn.Writer.WriteInteger(0)
+		w.WriteInteger(0)
 		return true
 	}
 	if e.typ != _List {
-		conn.Writer.WriteError("WRONGTYPE Operation against a key holding the wrong kind of value")
+		w.WriteError("WRONGTYPE Operation against a key holding the wrong kind of value")
 		return false
 	}
 
@@ -180,25 +180,25 @@ func LLenHandler(conn *Conn, args []Value) bool {
 	l := lst.len
 	e.RUnlock()
 
-	conn.Writer.WriteInteger(l)
+	w.WriteInteger(l)
 	return true
 }
 
-func LRangeHandler(conn *Conn, args []Value) bool {
+func LRangeHandler(w IWriter, args []Value) bool {
 	if len(args) != 3 {
-		conn.Writer.WriteError("ERR wrong number of arguments for 'lrange' command")
+		w.WriteError("ERR wrong number of arguments for 'lrange' command")
 		return false
 	}
 
 	key := args[0].String()
 	start, err := strconv.Atoi(args[1].String())
 	if err != nil {
-		conn.Writer.WriteError("ERR value is not an integer or out of range")
+		w.WriteError("ERR value is not an integer or out of range")
 		return false
 	}
 	stop, err := strconv.Atoi(args[2].String())
 	if err != nil {
-		conn.Writer.WriteError("ERR value is not an integer or out of range")
+		w.WriteError("ERR value is not an integer or out of range")
 		return false
 	}
 
@@ -207,11 +207,11 @@ func LRangeHandler(conn *Conn, args []Value) bool {
 	dbMu.RUnlock()
 
 	if !ok {
-		conn.Writer.WriteArray(Value{typ: ARRAY, array: []Value{}})
+		w.WriteArray(Value{typ: ARRAY, array: []Value{}})
 		return true
 	}
 	if e.typ != _List {
-		conn.Writer.WriteError("WRONGTYPE Operation against a key holding the wrong kind of value")
+		w.WriteError("WRONGTYPE Operation against a key holding the wrong kind of value")
 		return false
 	}
 
@@ -232,7 +232,7 @@ func LRangeHandler(conn *Conn, args []Value) bool {
 	}
 	if start >= l {
 		e.RUnlock()
-		conn.Writer.WriteArray(Value{typ: ARRAY, array: []Value{}})
+		w.WriteArray(Value{typ: ARRAY, array: []Value{}})
 		return true
 	}
 	if stop >= l {
@@ -256,37 +256,37 @@ func LRangeHandler(conn *Conn, args []Value) bool {
 		}
 	}
 
-	conn.Writer.WriteArray(Value{typ: ARRAY, array: values})
+	w.WriteArray(Value{typ: ARRAY, array: values})
 	return true
 }
 
-func LTrimHandler(conn *Conn, args []Value) bool {
+func LTrimHandler(w IWriter, args []Value) bool {
 	if len(args) != 3 {
-		conn.Writer.WriteError("ERR wrong number of arguments for 'ltrim' command")
+		w.WriteError("ERR wrong number of arguments for 'ltrim' command")
 		return false
 	}
 
 	key := args[0].String()
 	start, err := strconv.Atoi(args[1].String())
 	if err != nil {
-		conn.Writer.WriteError("ERR value is not an integer or out of range")
+		w.WriteError("ERR value is not an integer or out of range")
 		return false
 	}
 	stop, err := strconv.Atoi(args[2].String())
 	if err != nil {
-		conn.Writer.WriteError("ERR value is not an integer or out of range")
+		w.WriteError("ERR value is not an integer or out of range")
 		return false
 	}
 
 	dbMu.Lock()
 	e, ok := db[key]
 	if !ok {
-		conn.Writer.WriteSimpleString("OK")
+		w.WriteSimpleString("OK")
 		dbMu.Unlock()
 		return true
 	}
 	if e.typ != _List {
-		conn.Writer.WriteError("WRONGTYPE Operation against a key holding the wrong kind of value")
+		w.WriteError("WRONGTYPE Operation against a key holding the wrong kind of value")
 		dbMu.Unlock()
 		return false
 	}
@@ -311,7 +311,7 @@ func LTrimHandler(conn *Conn, args []Value) bool {
 		delete(db, key)
 		e.Unlock()
 		dbMu.Unlock()
-		conn.Writer.WriteSimpleString("OK")
+		w.WriteSimpleString("OK")
 		return true
 	}
 	if stop >= l {
@@ -328,6 +328,6 @@ func LTrimHandler(conn *Conn, args []Value) bool {
 	e.Unlock()
 	dbMu.Unlock()
 
-	conn.Writer.WriteSimpleString("OK")
+	w.WriteSimpleString("OK")
 	return true
 }
