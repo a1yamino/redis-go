@@ -1,7 +1,7 @@
 package pkg
 
 type CommandHandler struct {
-	Handler func(*Conn, []Value) bool
+	Handler func(IWriter, []Value) bool
 	persist bool
 }
 
@@ -9,8 +9,8 @@ func (h *CommandHandler) should_persist() bool {
 	return h.persist
 }
 
-func (h *CommandHandler) call(conn *Conn, args []Value) bool {
-	return h.Handler(conn, args)
+func (h *CommandHandler) call(w IWriter, args []Value) bool {
+	return h.Handler(w, args)
 }
 
 var defaultHandlers = map[string]CommandHandler{
@@ -42,12 +42,12 @@ var defaultHandlers = map[string]CommandHandler{
 	"LTRIM":  {Handler: LTrimHandler, persist: true},
 }
 
-func pingHandler(conn *Conn, args []Value) bool {
+func pingHandler(w IWriter, args []Value) bool {
 	resp := "PONG"
 	if len(args) > 0 {
 		resp = args[0].String()
 	}
 
-	conn.Writer.WriteSimpleString(resp)
+	w.WriteSimpleString(resp)
 	return true
 }

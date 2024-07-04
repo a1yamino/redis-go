@@ -3,6 +3,7 @@ module redis
 go 1.21.6
 
 require (
+	github.com/panjf2000/ants/v2 v2.10.0 // indirect
 	github.com/panjf2000/gnet/v2 v2.5.7 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
