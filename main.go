@@ -28,5 +28,5 @@ func main() {
 	go func() {
 		log.Println(http.ListenAndServe("localhost:6060", nil))
 	}()
-	log.Fatal(gnet.Run(srv, srv.ProtoAddr(), gnet.WithMulticore(srv.Multicore())))
+	log.Fatal(gnet.Run(srv, srv.ProtoAddr(), gnet.WithMulticore(srv.Multicore()), gnet.WithTCPNoDelay(gnet.TCPDelay)))
 }
