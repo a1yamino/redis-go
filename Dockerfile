@@ -1,6 +1,6 @@
-FROM ubuntu:22.04-slim
+FROM scratch
 
-WORKDIR /app
-COPY ./bin /app
 
-CMD ["./app/bin/redigo"]
+COPY ./bin/redigo /app
+
+ENTRYPOINT ["/app"]

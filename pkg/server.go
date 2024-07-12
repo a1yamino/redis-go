@@ -70,6 +70,9 @@ func (s *Server) AccpetFunc(f func(conn net.Conn) bool) {
 
 func (s *Server) handleConn(conn net.Conn) error {
 	c := NewConn(conn)
+	// tcpconn := conn.(*net.TCPConn)
+	// tcpconn.SetNoDelay(false)
+
 	defer conn.Close()
 	s.Lock()
 	accpet := s.accpet
